@@ -1,0 +1,550 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mensagens</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0b0b0b;
+  --panel: #121212;
+  --panel2: #191919;
+  --border: #2b2b2b;
+  --red: #b91c1c;
+  --red2: #e53939;
+  --text: #eeeeee;
+  --muted: #858585;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+}
+
+/* BARRA LATERAL */
+
+.sidebar {
+  width: 290px;
+  min-width: 235px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  height: 70px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--red), #641010);
+  display: grid;
+  place-items: center;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.sidebar-header span {
+  font-weight: bold;
+  letter-spacing: 1px;
+  font-size: 13px;
+}
+
+.section-label {
+  padding: 22px 18px 10px;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.contact {
+  margin: 3px 9px;
+  padding: 13px 11px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border-radius: 7px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.contact:hover {
+  background: #1b1b1b;
+}
+
+.contact.active {
+  background: #291212;
+  border-color: #512020;
+}
+
+.avatar {
+  width: 39px;
+  height: 39px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #292929;
+  color: var(--red2);
+  flex-shrink: 0;
+}
+
+.contact-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.contact-id {
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.preview {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px;
+  color: #555;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+}
+
+/* CONVERSA */
+
+.main {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-header {
+  height: 70px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 12px;
+  background: #101010;
+}
+
+.chat-header .contact-id {
+  margin: 0;
+}
+
+.status {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 5px;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 5%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.date-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #777;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  margin: 12px 0;
+}
+
+.date-divider::before,
+.date-divider::after {
+  content: "";
+  height: 1px;
+  background: var(--border);
+  flex: 1;
+}
+
+.message {
+  max-width: min(75%, 520px);
+  padding: 12px 15px;
+  border: 1px solid #303030;
+  border-radius: 4px 12px 12px 12px;
+  background: var(--panel2);
+  align-self: flex-start;
+}
+
+.message.outgoing {
+  align-self: flex-end;
+  background: #301313;
+  border-color: #552121;
+  border-radius: 12px 4px 12px 12px;
+}
+
+.sender {
+  font-size: 10px;
+  color: var(--red2);
+  font-weight: bold;
+  margin-bottom: 8px;
+  letter-spacing: .5px;
+}
+
+.message-text {
+  font-size: 13px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.timestamp {
+  font-size: 9px;
+  color: #777;
+  text-align: right;
+  margin-top: 8px;
+}
+
+.eyes {
+  font-size: 18px;
+}
+
+/* IMAGEM DO MEME */
+
+.image-placeholder {
+  width: min(100%, 420px);
+  min-height: 180px;
+  border: 1px dashed #555;
+  border-radius: 8px;
+  background: #101010;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #777;
+  font-size: 12px;
+  padding: 20px;
+}
+
+.image-placeholder svg {
+  width: 34px;
+  height: 34px;
+  stroke: var(--red2);
+}
+
+.image-placeholder img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
+  display: block;
+}
+
+.empty {
+  margin: auto;
+  color: #666;
+  text-align: center;
+  font-size: 13px;
+}
+
+.mobile-back {
+  display: none;
+  border: 0;
+  background: transparent;
+  color: white;
+  font-size: 22px;
+  padding: 5px;
+  cursor: pointer;
+}
+
+@media (max-width: 650px) {
+  .sidebar {
+    width: 100%;
+    min-width: 0;
+    border-right: 0;
+  }
+
+  .main {
+    display: none;
+    width: 100%;
+  }
+
+  body.mobile-chat .sidebar {
+    display: none;
+  }
+
+  body.mobile-chat .main {
+    display: flex;
+  }
+
+  .mobile-back {
+    display: block;
+  }
+
+  .messages {
+    padding: 20px 14px;
+  }
+
+  .message {
+    max-width: 90%;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">M</div>
+      <span>MENSAGENS</span>
+    </div>
+
+    <div class="section-label">Conversas</div>
+
+    <div class="contact active" data-chat="lisandro">
+      <div class="avatar">◈</div>
+      <div class="contact-info">
+        <div class="contact-id">C22D4C</div>
+        <div class="preview">Imagem</div>
+      </div>
+    </div>
+
+    <div class="contact" data-chat="davi">
+      <div class="avatar">◈</div>
+      <div class="contact-info">
+        <div class="contact-id">A16L2B</div>
+        <div class="preview">talvez, mas o Roger...</div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      SISTEMA DE MENSAGENS
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="chat-header">
+      <button class="mobile-back" id="back" aria-label="Voltar">‹</button>
+      <div class="avatar">◈</div>
+      <div>
+        <div class="contact-id" id="headerID">C22D4C</div>
+        <div class="status">Histórico de mensagens</div>
+      </div>
+    </header>
+
+    <section class="messages" id="messages"></section>
+  </main>
+</div>
+
+<script>
+const conversas = {
+  lisandro: [
+    {
+      tipo: "data",
+      texto: "2018 · 3 DIAS ATRÁS"
+    },
+    {
+      tipo: "imagem",
+      remetente: "C22D4C",
+      arquivo: ""
+    }
+  ],
+
+  davi: [
+    {
+      tipo: "data",
+      texto: "2008 · 10 ANOS ATRÁS"
+    },
+    {
+      remetente: "A16L2B",
+      texto: "Sobre o cristal, ele tá bem guardado"
+    },
+    {
+      remetente: "J13BP7",
+      texto: "Devolveram pro mlk?"
+    },
+    {
+      remetente: "A16L2B",
+      texto: "não me falaram n"
+    },
+    {
+      remetente: "A16L2B",
+      texto: "mas acho q sim"
+    },
+    {
+      remetente: "J13BP7",
+      texto: "e as manifestações paranormais?"
+    },
+    {
+      remetente: "A16L2B",
+      texto: "tão tentando controlar, mas tem algo bizarro naquele shopping"
+    },
+    {
+      remetente: "A16L2B",
+      texto: "o cristal precisa de alguém manipulando eles, se ambos os de morte e o de sangue tão com a gente... 👀"
+    },
+    {
+      remetente: "J13BP7",
+      texto: "vc acha q pode ser alguém q esteja com os cristais de energia e conhecimento?"
+    },
+    {
+      remetente: "A16L2B",
+      texto: "talvez, mas o Roger não me fala nada desses outros dois cristais..."
+    },
+    {
+      remetente: "J13BP7",
+      texto: "faz sentido"
+    },
+    {
+      tipo: "data",
+      texto: "2018 · 3 DIAS ATRÁS"
+    },
+    {
+      remetente: "A16L2B",
+      texto: "oi José! Vc viu do evento? Mandaram eu te avisar, sei q vc n gosta muito de falar de assuntos pessoais fora do culto, mas talvez vc fosse se interessar!"
+    },
+    {
+      tipo: "imagem",
+      remetente: "A16L2B",
+      arquivo: ""
+    }
+  ]
+};
+
+const mensagens = document.getElementById("messages");
+const headerID = document.getElementById("headerID");
+const contatos = [...document.querySelectorAll(".contact")];
+
+function criarImagem(item) {
+  const caixa = document.createElement("div");
+  caixa.className = "image-placeholder";
+
+  if (item.arquivo) {
+    const imagem = document.createElement("img");
+    imagem.src = item.arquivo;
+    imagem.alt = "Imagem recebida";
+    caixa.appendChild(imagem);
+  } else {
+    const svg = document.createElementNS(
+      "http://www.w3.org/2000/svg", "svg"
+    );
+
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke-width", "1.5");
+
+    const caminho = document.createElementNS(
+      "http://www.w3.org/2000/svg", "path"
+    );
+    caminho.setAttribute(
+      "d",
+      "M4 5h16v14H4z M4 15l5-5 4 4 3-3 4 4 M9 9h.01"
+    );
+    svg.appendChild(caminho);
+
+    const legenda = document.createElement("span");
+    legenda.textContent = "Imagem anexada";
+
+    caixa.append(svg, legenda);
+  }
+
+  return caixa;
+}
+
+function renderizar(chat) {
+  mensagens.replaceChildren();
+
+  const lista = conversas[chat];
+  headerID.textContent = chat === "lisandre" ? "C22D4C" : "A16L2B";
+
+  lista.forEach(item => {
+    if (item.tipo === "data") {
+      const divisor = document.createElement("div");
+      divisor.className = "date-divider";
+      divisor.textContent = item.texto;
+      mensagens.appendChild(divisor);
+      return;
+    }
+
+    const mensagem = document.createElement("article");
+    mensagem.className = "message";
+
+    if (item.remetente === "J13BP7") {
+      mensagem.classList.add("outgoing");
+    }
+
+    if (item.tipo === "imagem") {
+      mensagem.appendChild(criarImagem(item));
+    } else {
+      const remetente = document.createElement("div");
+      remetente.className = "sender";
+      remetente.textContent = item.remetente;
+
+      const texto = document.createElement("div");
+      texto.className = "message-text";
+      texto.textContent = item.texto;
+
+      mensagem.append(remetente, texto);
+    }
+
+    mensagens.appendChild(mensagem);
+  });
+
+  mensagens.scrollTop = mensagens.scrollHeight;
+
+  contatos.forEach(contato => {
+    contato.classList.toggle(
+      "active",
+      contato.dataset.chat === chat
+    );
+  });
+
+  document.body.classList.add("mobile-chat");
+}
+
+contatos.forEach(contato => {
+  contato.addEventListener("click", () => {
+    renderizar(contato.dataset.chat);
+  });
+});
+
+document.getElementById("back").addEventListener("click", () => {
+  document.body.classList.remove("mobile-chat");
+});
+
+// Abre diretamente na conversa com C22D4C.
+renderizar("lisandre");
+</script>
+</body>
+</html>
