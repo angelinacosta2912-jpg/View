@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Autenticação do Sistema</title>
+<title>Sistema de Autenticação</title>
 
 <style>
 * {
@@ -15,8 +15,8 @@ body {
   margin: 0;
   min-height: 100vh;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   padding: 20px;
   background: #080808;
   color: #e7e7e7;
@@ -46,6 +46,7 @@ h1 {
   letter-spacing: 2px;
   font-weight: normal;
   margin-bottom: 12px;
+  overflow-wrap: anywhere;
 }
 
 .description {
@@ -73,6 +74,7 @@ input {
   color: white;
   outline: none;
   font-family: inherit;
+  border-radius: 0;
 }
 
 input:focus {
@@ -94,6 +96,11 @@ button:hover {
   background: #9b2020;
 }
 
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .hidden {
   display: none !important;
 }
@@ -105,7 +112,6 @@ button:hover {
   background: #171010;
   font-size: 12px;
   line-height: 1.8;
-  white-space: pre-line;
   overflow-wrap: anywhere;
 }
 
@@ -154,16 +160,20 @@ button:hover {
   font-size: 10px;
   text-align: center;
   margin-top: 25px;
+  line-height: 1.7;
 }
 </style>
 </head>
 
 <body>
 <main class="panel">
+
   <div class="logo">SISTEMA // ACESSO RESTRITO</div>
 
+  <!-- IDENTIFICADOR -->
   <section id="idScreen">
     <h1>AUTENTICAÇÃO</h1>
+
     <p class="description">
       Informe seu identificador de usuário para iniciar
       o procedimento de autenticação.
@@ -171,40 +181,51 @@ button:hover {
 
     <form id="idForm">
       <label for="userId">IDENTIFICADOR DE USUÁRIO</label>
+
       <input
         id="userId"
+        type="text"
         maxlength="6"
         minlength="6"
         autocomplete="off"
+        autocapitalize="characters"
+        spellcheck="false"
+        placeholder="Ex.: ABC12D"
         required
-        placeholder="Ex.: A16L2B"
       >
+
       <button type="submit">CONTINUAR</button>
     </form>
 
     <div id="idMessage" class="message hidden"></div>
   </section>
 
+  <!-- BOAS-VINDAS -->
   <section id="welcomeScreen" class="hidden welcome">
     <h1 id="welcomeTitle">BEM-VINDO</h1>
+
     <p id="welcomeText"></p>
+
     <p>Inicializando protocolo de autenticação...</p>
   </section>
 
+  <!-- SENHA -->
   <section id="passwordScreen" class="hidden">
     <h1>VERIFICAÇÃO DE CREDENCIAIS</h1>
+
     <p class="description">
       Identificador reconhecido. Insira a credencial de acesso.
     </p>
 
     <form id="passwordForm">
       <label for="password">SENHA DE ACESSO</label>
+
       <input
         id="password"
         type="password"
         autocomplete="off"
-        required
         placeholder="Insira a senha"
+        required
       >
 
       <div class="counter" id="counter">
@@ -219,68 +240,146 @@ button:hover {
     <div id="passwordMessage" class="message hidden"></div>
   </section>
 
+  <!-- MENSAGENS FINAIS E RECUPERAÇÃO -->
   <section id="finalScreen" class="hidden">
     <div id="finalMessage" class="message"></div>
+
+    <div id="recoveryArea" class="hidden">
+      <form id="recoveryForm" style="margin-top:20px">
+        <label for="emergencyCode">
+          CÓDIGO DE RECUPERAÇÃO
+        </label>
+
+        <input
+          id="emergencyCode"
+          type="password"
+          autocomplete="off"
+          placeholder="Código de emergência"
+          required
+        >
+
+        <button type="submit">RESTAURAR ACESSO</button>
+      </form>
+
+      <div id="recoveryMessage" class="message hidden"></div>
+    </div>
   </section>
 
-  <div class="footer">SISTEMA INTERNO // ACESSO MONITORADO</div>
+  <div class="footer">
+    SISTEMA INTERNO // ACESSO MONITORADO
+  </div>
+
 </main>
 
 <script>
+/* =========================================
+   CONFIGURAÇÕES DO ARG
+========================================= */
+
 const users = {
-  "A16L2B": { name: "Davi Moraes", blocked: true },
-  "B67K61": { name: "Eric Kalel", blocked: true },
-  "J13BP7": { name: "Josefino", blocked: false },
-  "C22D4C": { name: "José Lisandre", blocked: true }
+  "A16L2B": {
+    name: "Davi Moraes",
+    blocked: true
+  },
+
+  "B67K61": {
+    name: "Eric Kalel",
+    blocked: true
+  },
+
+  "J13BP7": {
+    name: "Josefino",
+    blocked: false
+  },
+
+  "C22D4C": {
+    name: "José Lisandre",
+    blocked: true
+  }
 };
 
 const correctPassword = "Florzinha";
+const emergencyPassword = "VOLTA-721";
 const maxAttempts = 3;
+const welcomeDelay = 1800;
+
+/* =========================================
+   ESTADO DO SISTEMA
+========================================= */
 
 let currentUserId = "";
-let attempts = Number(sessionStorage.getItem("loginAttempts") || 0);
-let welcomeTimer;
+let attempts = Number(
+  sessionStorage.getItem("loginAttempts") || 0
+);
+
+let welcomeTimer = null;
+
+/* =========================================
+   ELEMENTOS
+========================================= */
 
 const idScreen = document.getElementById("idScreen");
 const welcomeScreen = document.getElementById("welcomeScreen");
 const passwordScreen = document.getElementById("passwordScreen");
 const finalScreen = document.getElementById("finalScreen");
 
+const idForm = document.getElementById("idForm");
+const passwordForm = document.getElementById("passwordForm");
+const recoveryForm = document.getElementById("recoveryForm");
+
+const idMessage = document.getElementById("idMessage");
+const passwordMessage = document.getElementById("passwordMessage");
+const finalMessage = document.getElementById("finalMessage");
+const recoveryArea = document.getElementById("recoveryArea");
+const recoveryMessage = document.getElementById("recoveryMessage");
+
+/* =========================================
+   NAVEGAÇÃO ENTRE TELAS
+========================================= */
+
 function showOnly(screen) {
-  [idScreen, welcomeScreen, passwordScreen, finalScreen]
-    .forEach(item => item.classList.add("hidden"));
+  [
+    idScreen,
+    welcomeScreen,
+    passwordScreen,
+    finalScreen
+  ].forEach(item => item.classList.add("hidden"));
 
   screen.classList.remove("hidden");
 }
 
+function clearMessages() {
+  idMessage.classList.add("hidden");
+  passwordMessage.classList.add("hidden");
+  recoveryMessage.classList.add("hidden");
+}
+
+function showMessage(container, title, message) {
+  container.replaceChildren();
+
+  const heading = document.createElement("div");
+  heading.className = "error-title";
+  heading.textContent = title;
+
+  const content = document.createElement("div");
+  content.textContent = message;
+
+  container.append(heading, content);
+  container.classList.remove("hidden");
+}
+
 function showFinal(title, message) {
   showOnly(finalScreen);
-  document.getElementById("finalMessage").innerHTML = "";
 
-  const heading = document.createElement("div");
-  heading.className = "error-title";
-  heading.textContent = title;
+  showMessage(finalMessage, title, message);
 
-  const text = document.createElement("div");
-  text.textContent = message;
-
-  document.getElementById("finalMessage").append(heading, text);
+  recoveryArea.classList.add("hidden");
+  recoveryMessage.classList.add("hidden");
 }
 
-function showIdError(title, message) {
-  const box = document.getElementById("idMessage");
-  box.classList.remove("hidden");
-  box.innerHTML = "";
-
-  const heading = document.createElement("div");
-  heading.className = "error-title";
-  heading.textContent = title;
-
-  const text = document.createElement("div");
-  text.textContent = message;
-
-  box.append(heading, text);
-}
+/* =========================================
+   CONTADOR DE TENTATIVAS
+========================================= */
 
 function updateCounter() {
   document.querySelectorAll(".dot").forEach((dot, index) => {
@@ -288,74 +387,124 @@ function updateCounter() {
   });
 }
 
+function resetAttempts() {
+  attempts = 0;
+  sessionStorage.removeItem("loginAttempts");
+  updateCounter();
+}
+
+/* =========================================
+   ERROS DE AUTENTICAÇÃO
+========================================= */
+
+function showUnknownIdError() {
+  showMessage(
+    idMessage,
+    "ERRO DE AUTENTICAÇÃO",
+    "O identificador informado não está registrado no sistema. Verifique os dados inseridos e tente novamente."
+  );
+}
+
+function showActiveSessionError() {
+  showFinal(
+    "ERRO 721 — SESSÃO ATIVA",
+    "Este usuário já possui uma sessão ativa em outro dispositivo. Encerre a sessão anterior e tente novamente."
+  );
+}
+
+function showLockout() {
+  showFinal(
+    "ACESSO BLOQUEADO",
+    "O limite de tentativas de autenticação foi excedido. Um alerta de segurança foi encaminhado ao endereço de e-mail cadastrado."
+  );
+
+  recoveryArea.classList.remove("hidden");
+  document.getElementById("emergencyCode").value = "";
+}
+
+/* =========================================
+   IDENTIFICAÇÃO DO USUÁRIO
+========================================= */
+
 function beginPasswordStage() {
   showOnly(passwordScreen);
+  clearMessages();
+
+  document.getElementById("password").value = "";
+
   updateCounter();
 }
 
 function handleRecognizedId(id) {
   const user = users[id];
 
+  currentUserId = id;
+
   showOnly(welcomeScreen);
+
   document.getElementById("welcomeTitle").textContent =
     "BEM-VINDO, " + user.name.toUpperCase() + ".";
+
   document.getElementById("welcomeText").textContent =
     "Identidade reconhecida. Preparando resposta do sistema.";
 
   welcomeTimer = setTimeout(() => {
     if (user.blocked) {
-      showFinal(
-        "ERRO 721 — SESSÃO ATIVA",
-        "Este usuário já possui uma sessão ativa em outro dispositivo. Encerre a sessão anterior e tente novamente."
-      );
+      showActiveSessionError();
       return;
     }
 
-    currentUserId = id;
+    if (attempts >= maxAttempts) {
+      showLockout();
+      return;
+    }
+
     beginPasswordStage();
-  }, 1800);
+  }, welcomeDelay);
 }
 
-document.getElementById("idForm").addEventListener("submit", event => {
+/* =========================================
+   FORMULÁRIO DE IDENTIFICADOR
+========================================= */
+
+idForm.addEventListener("submit", event => {
   event.preventDefault();
+
   clearTimeout(welcomeTimer);
+  clearMessages();
 
   const id = document.getElementById("userId")
     .value.trim().toUpperCase();
 
-  document.getElementById("idMessage").classList.add("hidden");
-
-  if (users[id]) {
-    handleRecognizedId(id);
+  if (!users[id]) {
+    showUnknownIdError();
     return;
   }
 
-  showIdError(
-    "ERRO DE AUTENTICAÇÃO",
-    "O identificador informado não está registrado no sistema. Verifique os dados inseridos e tente novamente."
-  );
+  handleRecognizedId(id);
 });
 
-document.getElementById("passwordForm").addEventListener("submit", event => {
+/* =========================================
+   FORMULÁRIO DE SENHA
+========================================= */
+
+passwordForm.addEventListener("submit", event => {
   event.preventDefault();
 
-  const password = document.getElementById("password").value;
-  const message = document.getElementById("passwordMessage");
-
   if (attempts >= maxAttempts) {
-    showFinal(
-      "ACESSO BLOQUEADO",
-      "O limite de tentativas de autenticação foi excedido. Um alerta de segurança foi encaminhado ao endereço de e-mail cadastrado."
-    );
+    showLockout();
     return;
   }
 
-  if (password === correctPassword) {
-    sessionStorage.removeItem("loginAttempts");
-    showOnly(finalScreen);
+  const password = document.getElementById("password").value;
 
-    document.getElementById("finalMessage").textContent =
-      "AUTENTICAÇÃO CONCLUÍDA. Redirecionando...";
+  if (password === correctPassword) {
+    resetAttempts();
+
+    showFinal(
+      "AUTENTICAÇÃO CONCLUÍDA",
+      "Credenciais validadas. Redirecionando..."
+    );
 
     setTimeout(() => {
       window.location.href = "chat.html";
@@ -365,33 +514,79 @@ document.getElementById("passwordForm").addEventListener("submit", event => {
   }
 
   attempts++;
-  sessionStorage.setItem("loginAttempts", String(attempts));
+
+  sessionStorage.setItem(
+    "loginAttempts",
+    String(attempts)
+  );
+
   updateCounter();
 
   document.getElementById("password").value = "";
 
   if (attempts >= maxAttempts) {
-    showFinal(
-      "ACESSO BLOQUEADO",
-      "O limite de tentativas de autenticação foi excedido. Um alerta de segurança foi encaminhado ao endereço de e-mail cadastrado."
-    );
+    showLockout();
     return;
   }
 
-  message.classList.remove("hidden");
-  message.innerHTML = "";
-
-  const heading = document.createElement("div");
-  heading.className = "error-title";
-  heading.textContent = "CREDENCIAL INVÁLIDA";
-
-  const text = document.createElement("div");
-  text.textContent =
+  showMessage(
+    passwordMessage,
+    "CREDENCIAL INVÁLIDA",
     "A senha informada está incorreta. Tentativas restantes: " +
-    (maxAttempts - attempts) + ".";
-
-  message.append(heading, text);
+      (maxAttempts - attempts) + "."
+  );
 });
+
+/* =========================================
+   RECUPERAÇÃO DE EMERGÊNCIA
+========================================= */
+
+recoveryForm.addEventListener("submit", event => {
+  event.preventDefault();
+
+  const code = document.getElementById("emergencyCode").value;
+
+  if (code !== emergencyPassword) {
+    showMessage(
+      recoveryMessage,
+      "CÓDIGO INVÁLIDO",
+      "O código de recuperação informado não foi reconhecido."
+    );
+
+    document.getElementById("emergencyCode").value = "";
+    return;
+  }
+
+  resetAttempts();
+
+  currentUserId = "";
+
+  document.getElementById("userId").value = "";
+  document.getElementById("password").value = "";
+  document.getElementById("emergencyCode").value = "";
+
+  recoveryArea.classList.add("hidden");
+  clearMessages();
+
+  showOnly(idScreen);
+
+  showMessage(
+    idMessage,
+    "ACESSO RESTAURADO",
+    "Contador de tentativas reiniciado. Você pode iniciar uma nova autenticação."
+  );
+});
+
+/* =========================================
+   INICIALIZAÇÃO
+========================================= */
+
+updateCounter();
+
+if (attempts >= maxAttempts) {
+  showLockout();
+}
 </script>
+
 </body>
 </html>
